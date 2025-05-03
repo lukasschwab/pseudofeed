@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"flag"
 	"slices"
+	"strings"
 
 	"html/template"
 	"net/http"
@@ -156,9 +157,19 @@ func main() {
 		return nil
 	})
 
-	port := flag.String("port", "3000", "Port to run the server on")
+	port := flag.String("port", "8081", "Port to run the server on")
+
 	flag.Parse()
-	app.Listen(*port)
+	if port == nil || *port == "" {
+		panic("Port is required")
+	}
+	if !strings.HasPrefix(*port, ":") {
+		*port = ":" + *port
+	}
+
+	if err := app.Listen(*port); err != nil {
+		panic(err)
+	}
 }
 
 func toNewItem(url string, now time.Time) jsonfeed.Item {
