@@ -1,0 +1,109 @@
+<head>
+    <title>pseudofeed</title>
+    <meta charset="UTF-8">
+    <link rel="icon" href="./static/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="./static/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="./static/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./static/favicon-16x16.png">
+    <link rel="manifest" href="./static/site.webmanifest">
+    <style>
+        body {
+            font-size: x-large;
+        }
+
+        /* Bodge: don't wrap dates. */
+        table tbody tr td:nth-child(4) {
+            white-space: nowrap;
+        }
+
+        /* Tables (from blog) */
+        table {
+            font-size: x-large;
+            border-spacing: 0;
+        }
+
+        th, td {
+            padding: 0.5em;
+        }
+
+        th {
+            text-align: left;
+            border-bottom: 1px solid black;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .date {
+            text-align: right;
+            font-family: monospace;
+        }
+
+        /* Form */
+        details {
+            margin: 1em 0;
+            padding: 1em;
+            border: 1px dashed black;
+            max-width: 500px;
+        }
+
+        form {
+            margin: 1em;
+        }
+
+        label {
+            display: block;
+            font-family: monospace;
+            font-size: large;
+            color: grey;
+        }
+
+        .form-group {
+            margin-bottom: 0.5em;
+        }
+
+        input {
+            font-size: x-large;
+            width: 100%;
+        }
+
+        button {
+            font-size: x-large;
+        }
+    </style>
+</head>
+
+<header>
+    <h1>strx</h1>
+</header>
+
+<details>
+    <summary>Add an item...</summary>
+    <form id="textForm" 
+        action="/" method="post" target="oubliette"
+        onsubmit="this.submit(); window.location.reload(); return false;"
+    >
+        <div class="form-group">
+            <label for="url">URL</label>
+            <input type="url" class="form-control" id="url" name="url" required>
+        </div>
+        <label>Submit</label>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+    <!-- Direct the AJAX response to this hidden iframe: prevent replacing DOM with JSON. -->
+    <iframe name="oubliette" style="display: none;"></iframe>
+</details>
+
+<table class="table">
+    <tr>
+        <th>Date</th>
+        <th>URL</th>
+    </tr>
+    {{ range . }}
+    <tr>
+        <td>{{.DatePublished}}</td>
+        <td><a href="{{.ExternalURL}}">{{.ExternalURL}}</a></td>
+    </tr>
+    {{ end }}
+</table>
