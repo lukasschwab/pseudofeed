@@ -175,6 +175,8 @@ func main() {
 func toNewItem(url string, now time.Time) jsonfeed.Item {
 	return jsonfeed.Item{
 		ID:            url,
+		URL:           url,
+		Title:         url,
 		ExternalURL:   url,
 		DatePublished: now,
 	}
