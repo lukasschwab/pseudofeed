@@ -8,6 +8,7 @@ import (
 
 	"html/template"
 	"net/http"
+	neturl "net/url"
 	"os"
 	"path/filepath"
 	"time"
@@ -172,14 +173,52 @@ func main() {
 	}
 }
 
-func toNewItem(url string, now time.Time) jsonfeed.Item {
+func toNewItem(data string, now time.Time) jsonfeed.Item {
+	title, url, ok := parseSharedFromAndroid(data)
+	if !ok {
+		// We can't extract a URL, so just treat the whole data as both title
+		// and URL. May result in broken links, but that's better than dropping
+		// the request.
+		title, url = data, data
+	}
 	return jsonfeed.Item{
 		ID:            url,
+		Title:         title,
 		URL:           url,
-		Title:         url,
 		ExternalURL:   url,
 		DatePublished: now,
 	}
+}
+
+// parseSharedFromAndroid compensates for Android's default share-from-chrome
+// behavior. Sharing a Wikipedia page to pseudofeed via [HTTP Shortcuts] yields
+// a "data" string like this rather than a raw URL:
+//
+//	Enver Hoxha - Wikipedia https://en.m.wikipedia.org/wiki/Enver_Hoxha
+//
+// This function separates a title (`Enver Hoxha - Wikipedia`) and a URL from
+// that data. I'm hoping for a consistent format, where the token after the last
+// space is always the URL.
+//
+// [HTTP Shortcuts]: https://http-shortcuts.rmy.ch/
+func parseSharedFromAndroid(data string) (title, url string, ok bool) {
+	data = strings.TrimSpace(data)
+	lastSpace := strings.LastIndex(data, " ")
+	if lastSpace == -1 {
+		return "", data, false
+	}
+	title, url = data[:lastSpace], data[lastSpace+1:]
+
+	// Sanity-check the URL format.
+	if parsed, err := neturl.Parse(url); err != nil {
+		log.Infof("Failed parsing URL: %v", err)
+		return "", data, false
+	} else if parsed.Host == "" {
+		log.Info("Failed parsing URL: no host")
+		return "", data, false
+	}
+
+	return title, url, true
 }
 
 // parseDate is unsafe.
