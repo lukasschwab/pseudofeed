@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"encoding/json"
 	"flag"
 	"slices"
 	"strings"
@@ -138,9 +139,22 @@ func main() {
 		}
 
 		feed, err := jsonfeed.Parse(raw)
-		feed.Items = append(feed.Items, item)
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Error parsing stored feed",
+				"raw":   err.Error(),
+			})
+		}
 
-		bytes, err := feed.ToJSON()
+		feed.Items = append(feed.Items, item)
+		if err := feed.Validate(); err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Generated invalid feed",
+				"raw":   err.Error(),
+			})
+		}
+
+		bytes, err := json.MarshalIndent(feed, "", "\t")
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 				"error": "Error marshaling JSON",
