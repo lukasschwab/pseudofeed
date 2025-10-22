@@ -28,13 +28,9 @@ const (
 //go:embed templates/html.tmpl
 var htmlTemplate string
 
-//go:embed templates/bookmarklet.tmpl
-var bookmarkletTemplate string
-
 var (
-	file            string
-	tmpl            *template.Template
-	tmplBookmarklet *template.Template
+	file string
+	tmpl *template.Template
 )
 
 func init() {
@@ -61,11 +57,6 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-
-	tmplBookmarklet, err = template.New("bookmarklet").Parse(bookmarkletTemplate)
-	if err != nil {
-		panic(err)
-	}
 }
 
 func main() {
@@ -83,22 +74,6 @@ func main() {
 			})
 		}
 		return c.Send(raw)
-	})
-
-	app.Get("/bookmarklet", func(c *fiber.Ctx) error {
-		c.Response().Header.Set("Content-Type", "application/javascript")
-		host := c.Request().URI().Host()
-		type TemplateData struct {
-			BaseURL string
-		}
-		if err := tmplBookmarklet.Execute(c, TemplateData{BaseURL: string(host)}); err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Error executing template",
-				"raw":   err.Error(),
-			})
-		}
-
-		return nil
 	})
 
 	app.Get("/", func(c *fiber.Ctx) error {
