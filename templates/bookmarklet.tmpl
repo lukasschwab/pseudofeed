@@ -1,0 +1,43 @@
+/**
+ * This script is served from {BaseURL}/bookmarklet
+ * It performs the POST request and handles the response notification.
+ *
+ * ⚠️ GO SERVER TEMPLATE INSTRUCTION ⚠️
+ * The Go handler will replace '{{.BaseURL}}' with the actual server address
+ * using Go's text/template package.
+ */
+
+// We wrap the entire script in an IIFE to keep variables local
+(function() {
+    const BASE_URL = '{{.BaseURL}}';
+
+    // 1. Notification Function (same as before)
+    const showMsg = (m, e = false) => {
+        const i = 'gemini-bm-msg';
+        let x = document.getElementById(i);
+        if (x) x.remove();
+        const el = document.createElement('div');
+        el.id = i;
+        el.style.cssText = `position:fixed;top:10%;left:50%;transform:translate(-50%, 0);padding:15px 25px;background:${e?'#f8d7da':'#d4edda'};color:${e?'#721c24':'#155724'};border:2px solid ${e?'#f5c6cb':'#c3e6cb'};border-radius:8px;z-index:99999;font-family:sans-serif;box-shadow:0 4px 12px rgba(0,0,0,0.15);cursor:pointer;max-width:90vw;user-select:none;`;
+        el.innerHTML = e ? `❌ Error: ${m}` : `✅ Success: URL Posted. Response: ${m.substring(0, 200)}${m.length > 200 ? '...' : ''}`;
+        el.onclick = () => el.remove();
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 7000);
+    };
+
+    // 2. Fetch Logic
+    // Target is now dynamically derived from the injected BASE_URL
+    fetch(BASE_URL + '/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'url=' + encodeURIComponent(document.location.href)
+    })
+    .then(r => {
+        if (!r.ok) throw new Error(`HTTP Status: ${r.status}`);
+        return r.text();
+    })
+    .then(d => showMsg(d))
+    .catch(e => showMsg(e.message, true));
+})();
